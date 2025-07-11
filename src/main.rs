@@ -17,7 +17,7 @@ fn main() {
         .read(true)
         .write(true)
         .create(true)
-        .open(path)
+        .open(&path)
         .expect("Error loading the file");
 
     println!("File already created, or initialized al succesfully loaded");
@@ -31,7 +31,7 @@ fn main() {
         match option.trim() {
             "1" => add_task(&mut task_file),
             "2" => list_task(&mut task_file),
-            "3" => delete_task(&mut task_file),
+            "3" => delete_task(&mut task_file, &path),
             _ => break,
         }
         show_options();
@@ -68,6 +68,34 @@ fn list_task(f: &mut File) {
     println!("-----------------------------------------------------");
 }
 
-fn delete_task(_f: &mut File) {
-    println!("Deleting task...");
+fn delete_task(f: &mut File, path: &String) {
+    println!("-----------------------------------------------------");
+    println!("What line or task do u want to delete based on the list: ");
+    let mut task_id: String = String::new();
+    io::stdin().read_line(&mut task_id).expect("Error with the input string");
+
+    let index: usize = task_id.trim().parse().expect("Invalid number to parse");
+
+
+    f.seek(SeekFrom::Start(0)).expect("Failed to seek to start");
+    let reader = BufReader::new(f);
+    let lines: Vec<String> = reader.lines().filter_map(Result::ok).collect();
+    let mut new_tasks: Vec<String> = lines.clone();  
+
+    if index < lines.len() {
+        new_tasks.remove(index);
+    } else {
+        println!("Type a valid index...");
+    }
+
+    let mut task_file = OpenOptions::new()
+        .write(true)
+        .truncate(true)
+        .open(path)
+        .expect("Error loading the file");
+
+    for line in new_tasks {
+        writeln!(task_file, "{}", line.trim()).expect("error adding tasks again");
+    }
+    println!("-----------------------------------------------------");
 }
